@@ -1,0 +1,24 @@
+OASISFormat: 0.4
+Name:        oc-react-playground
+Version:     0.0.1
+Synopsis:    jr react playground
+Authors:     Roma Sokolov
+License:     MIT
+Plugins:     DevFiles (0.2)
+BuildTools:  ocamlbuild
+
+Executable example
+  Path:           src
+  MainIs:         core.ml
+  Install:        false
+  CompiledObject: byte
+  BuildTools:     camlp4o
+  BuildDepends:   js_of_ocaml, js_of_ocaml.syntax
+  ByteOpt:        -syntax camlp4o -package js_of_ocaml -package js_of_ocaml.syntax
+
+PostBuildCommand:
+  js_of_ocaml --pretty --noinline core.byte -o resources/js/core.js
+  rm -f core.byte
+
+PostCleanCommand:
+  rm -f resources/js/core.js

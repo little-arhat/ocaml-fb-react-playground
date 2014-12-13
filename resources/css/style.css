@@ -1,0 +1,22 @@
+
+.ar_box {
+    display: inline-block;
+    position: relative;
+    /* move width to other class? */
+    min-width:7em;
+    width:9%; /* fallback */
+    width:9vw;
+    background-color: pink; /* for debug */
+    margin:0.25em;
+}
+.dummy-cell {
+    padding-top: 100%;
+}
+.element-cell {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding:0.5em;
+}

@@ -1,0 +1,16 @@
+_build
+.*.swp
+.merlin
+# Generated outputs
+*.native
+*.cfg
+*.xen
+*.map
+*.img
+*.xl
+static*.ml
+static*.mli
+mir-*
+log
+.DS_Store
+misc
