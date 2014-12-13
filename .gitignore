@@ -13,4 +13,7 @@ static*.mli
 mir-*
 log
 .DS_Store
-misc
+/misc
+resources/js/core.js
+setup.data
+setup.log
