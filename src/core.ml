@@ -16,15 +16,23 @@ module type COMPONENT = sig
 
 module type REACT = sig
     type component
-    val element_of_tag : string -> (string * Js.Unsafe.any) list -> string -> 'a (* component *)
+    type child = String of string | Component of component
+    type children = child list
+    val element_of_tag : string -> (* tag *)
+                         (string * Js.Unsafe.any) list ->
+                         children -> (* children *)
+                         'a (* component *)
     val render : component -> Dom_html.element Js.t -> unit
 
     val component : (module COMPONENT with type arg = 'a) -> ('a -> component)
   end
 
 module React:REACT = struct
-  let react = (Js.Unsafe.variable "React")
   type component = Js.Unsafe.any
+  type child = String of string | Component of component
+  type children = child list
+
+  let react = (Js.Unsafe.variable "React")
 
   let create_class renderer =
     let comp_opts = to_obj [("render",
@@ -35,10 +43,14 @@ module React:REACT = struct
     Js.Unsafe.meth_call react "createElement" [| comp; to_obj opts |]
 
   let element_of_tag tag opts children =
-    Js.Unsafe.meth_call react "createElement"
-                        [| inj @@ jss tag;
-                           inj @@ to_obj opts;
-                           inj @@ jss children |]
+    let children_ar = Array.of_list @@ List.map
+                                         (fun child ->
+                                          match child with
+                                          | String(st) -> inj @@ jss st
+                                          | Component(comp) -> inj comp)
+                                         children in
+    let opts = Array.append [| inj @@ jss tag; to_obj opts |] children_ar in
+    Js.Unsafe.meth_call react "createElement" opts
 
   let component (type a) (module Comp:COMPONENT with type arg = a) =
     let render_callback this _ =
@@ -63,10 +75,31 @@ module StringComponent = struct
   let to_js ov = jss ov
 end
 
+module CommentList = struct
+  include StringComponent
+  let render st = React.element_of_tag "div"
+                                       [("className", inj @@ jss "commentList")]
+                                       [React.String(st)]
+end
+let comment_list = React.component (module CommentList)
+
+module CommentForm = struct
+  include StringComponent
+  let render st = React.element_of_tag "div"
+                                       [("className", inj @@ jss "commentForm")]
+                                       [React.String(st)]
+end
+let comment_form = React.component (module CommentForm)
+
 module CommentBox = struct
   include StringComponent
-  let render st = React.element_of_tag "div" [("className",
-                                               inj @@ jss "commentBox")] st
+  let render st =
+    let header = React.element_of_tag "h1" [] [React.String("Comment: ")] in
+    React.element_of_tag "div"
+                         [("className", inj @@ jss "commentBox")]
+                         [React.Component(header);
+                          React.Component((comment_list "This is comment list"));
+                          React.Component((comment_form "This is comment form"))]
 end
 
 let comment_box = React.component (module CommentBox)
