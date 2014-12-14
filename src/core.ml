@@ -20,7 +20,7 @@ module type REACT = sig
     type children = child list
     val element_of_tag : string -> (* tag *)
                          (string * Js.Unsafe.any) list ->
-                         children -> (* children *)
+                         children ->
                          'a (* component *)
     val render : component -> Dom_html.element Js.t -> unit
 
