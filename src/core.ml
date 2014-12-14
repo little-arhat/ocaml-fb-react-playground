@@ -56,14 +56,15 @@ module React:REACT = struct
     Js.Unsafe.meth_call react "render" [| inj comp; inj node |]
 end
 
-module CommentBox = struct
+module StringComponent = struct
   type arg = string
   type jsval = Js.js_string Js.t
-
   let from_js jsv = Js.to_string jsv
-
   let to_js ov = jss ov
+end
 
+module CommentBox = struct
+  include StringComponent
   let render st = React.element_of_tag "div" [("className",
                                                inj @@ jss "commentBox")] st
 end
