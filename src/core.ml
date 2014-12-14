@@ -6,31 +6,34 @@ let to_obj l = Js.Unsafe.obj @@ Array.of_list l
 let jss s = Js.string s
 let inj o = Js.Unsafe.inject o
 
-module type COMPONENT = sig
+
+module ReactTypes = struct
+  type component = Js.Unsafe.any
+  type child = String of string | Component of component
+  type children = child list
+end
+
+module type COMPONENT  = sig
     type arg
     type jsval
     val to_js : arg -> jsval
     val from_js : jsval -> arg
-    val render : arg -> 'a (* REACT.component *)
+    val render : arg -> ReactTypes.component
   end
 
 module type REACT = sig
-    type component
-    type child = String of string | Component of component
-    type children = child list
+    include module type of ReactTypes
     val element_of_tag : string -> (* tag *)
                          (string * Js.Unsafe.any) list ->
                          children ->
-                         'a (* component *)
+                         component
     val render : component -> Dom_html.element Js.t -> unit
 
-    val component : (module COMPONENT with type arg = 'a) -> ('a -> component)
+    val defcomponent : (module COMPONENT with type arg = 'a) -> ('a -> component)
   end
 
 module React:REACT = struct
-  type component = Js.Unsafe.any
-  type child = String of string | Component of component
-  type children = child list
+  include ReactTypes
 
   let react = (Js.Unsafe.variable "React")
 
@@ -52,7 +55,7 @@ module React:REACT = struct
     let opts = Array.append [| inj @@ jss tag; to_obj opts |] children_ar in
     Js.Unsafe.meth_call react "createElement" opts
 
-  let component (type a) (module Comp:COMPONENT with type arg = a) =
+  let defcomponent (type a) (module Comp:COMPONENT with type arg = a) =
     let render_callback this _ =
       let props = Js.Unsafe.get this "props" in
       let value = Js.Unsafe.get props "value" in
@@ -81,7 +84,7 @@ module CommentList = struct
                                        [("className", inj @@ jss "commentList")]
                                        [React.String(st)]
 end
-let comment_list = React.component (module CommentList)
+let comment_list = React.defcomponent (module CommentList)
 
 module CommentForm = struct
   include StringComponent
@@ -89,7 +92,7 @@ module CommentForm = struct
                                        [("className", inj @@ jss "commentForm")]
                                        [React.String(st)]
 end
-let comment_form = React.component (module CommentForm)
+let comment_form = React.defcomponent (module CommentForm)
 
 module CommentBox = struct
   include StringComponent
@@ -102,7 +105,7 @@ module CommentBox = struct
                           React.Component((comment_form "This is comment form"))]
 end
 
-let comment_box = React.component (module CommentBox)
+let comment_box = React.defcomponent (module CommentBox)
 
 let start _:(bool Js.t) =
   let div = Dom_html.getElementById "main-area" in
