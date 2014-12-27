@@ -6,6 +6,42 @@ let to_obj l = Js.Unsafe.obj @@ Array.of_list l
 let jss s = Js.string s
 let inj o = Js.Unsafe.inject o
 
+module type OPTIONS = sig
+    type t
+    type el
+
+    val empty : t
+    val (<|) : t -> el -> t
+    val to_js : t -> 'a
+
+    val el_of_int : string -> int -> el
+    val el_of_float : string -> float -> el
+    val el_of_string : string -> string -> el
+    val el_of_bool : string -> bool -> el
+    val el_of_list : string -> el list -> el
+    val el_of_array : string -> el array -> el
+    val el_of_options : string -> t -> el
+
+  end
+
+module Options:OPTIONS = struct
+  type el = (string * Js.Unsafe.any)
+  type t = el list
+
+  let empty = []
+  let (<|) o p = p :: o
+  let to_js o = Js.Unsafe.obj @@ Array.of_list o
+
+  let el_of_int k v = (k, inj @@ Js.number_of_float @@ float_of_int v)
+  let el_of_float k v = (k, inj @@ Js.number_of_float v)
+  let el_of_string k v = (k, inj @@ Js.string v)
+  let el_of_bool k v = (k, inj @@ Js.bool v)
+  let el_of_list k v = (k, inj @@ Js.array @@ Array.of_list v)
+  let el_of_array k v = (k, inj @@ Js.array v)
+  let el_of_array k v = (k, inj @@ Js.array v)
+  let el_of_options k v = (k, inj @@ to_obj v)
+end
+module O = Options
 
 module ReactTypes = struct
   (* Want to hide impl details *)
@@ -28,7 +64,7 @@ module type REACT = sig
     include REACT_TYPES
     type child
     val tag : string -> (* tag *)
-              (string * Js.Unsafe.any) list -> (* options *)
+              Options.t ->
               child list ->
               component
     val text : string -> child
@@ -63,7 +99,7 @@ module React:REACT = struct
                                           | TextContent(st) -> inj @@ jss st
                                           | Component(comp) -> inj comp)
                                          children in
-    let opts = Array.append [| inj @@ jss tag; to_obj opts |] children_ar in
+    let opts = Array.append [| inj @@ jss tag; Options.to_js opts |] children_ar in
     Js.Unsafe.meth_call react "createElement" opts
 
   let defcomponent (type a) (module Comp:COMPONENT with type arg = a) =
@@ -91,26 +127,25 @@ end
 
 module CommentList = struct
   include StringComponent
-  let render st = React.tag "div"
-                            [("className", inj @@ jss "commentList")]
-                            [React.text st]
+  let render st =
+    React.tag "div" O.(empty <| el_of_string "className" "commentList")
+              [React.text st]
 end
 let comment_list = React.defcomponent (module CommentList)
 
 module CommentForm = struct
   include StringComponent
-  let render st = React.tag "div"
-                            [("className", inj @@ jss "commentForm")]
-                            [React.text st]
+  let render st =
+    React.tag "div" O.(empty <| el_of_string "className" "commentForm")
+              [React.text st]
 end
 let comment_form = React.defcomponent (module CommentForm)
 
 module CommentBox = struct
   include StringComponent
   let render st =
-    let header = React.tag "h1" [] [React.text "Comment: "] in
-    React.tag "div"
-              [("className", inj @@ jss "commentBox")]
+    let header = React.tag "h1" O.empty [React.text "Comment: "] in
+    React.tag "div" O.(empty <| el_of_string "className" "commentBox")
               [React.component header;
                React.component @@ comment_list "This is comment list";
                React.component @@ comment_form "This is comment form"]
