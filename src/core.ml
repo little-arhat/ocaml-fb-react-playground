@@ -8,9 +8,12 @@ let inj o = Js.Unsafe.inject o
 
 
 module ReactTypes = struct
+  (* Want to hide impl details *)
   type component = Js.Unsafe.any
-  type child = String of string | Component of component
-  type children = child list
+end
+
+module type REACT_TYPES = sig
+    type component = ReactTypes.component
 end
 
 module type COMPONENT  = sig
@@ -22,11 +25,14 @@ module type COMPONENT  = sig
   end
 
 module type REACT = sig
-    include module type of ReactTypes
-    val element_of_tag : string -> (* tag *)
-                         (string * Js.Unsafe.any) list ->
-                         children ->
-                         component
+    include REACT_TYPES
+    type child
+    val tag : string -> (* tag *)
+              (string * Js.Unsafe.any) list -> (* options *)
+              child list ->
+              component
+    val text : string -> child
+    val component : component -> child
     val render : component -> Dom_html.element Js.t -> unit
 
     val defcomponent : (module COMPONENT with type arg = 'a) -> ('a -> component)
@@ -34,6 +40,7 @@ module type REACT = sig
 
 module React:REACT = struct
   include ReactTypes
+  type child = TextContent of string | Component of component
 
   let react = (Js.Unsafe.variable "React")
 
@@ -42,14 +49,18 @@ module React:REACT = struct
                              inj @@ Js.wrap_meth_callback renderer)] in
     Js.Unsafe.meth_call react "createClass" [| comp_opts |]
 
-  let element_of_component comp opts =
+  let make_component comp opts =
     Js.Unsafe.meth_call react "createElement" [| comp; to_obj opts |]
 
-  let element_of_tag tag opts children =
+  (* public: *)
+  let text st = TextContent(st)
+  let component c = Component(c)
+
+  let tag tag opts children =
     let children_ar = Array.of_list @@ List.map
                                          (fun child ->
                                           match child with
-                                          | String(st) -> inj @@ jss st
+                                          | TextContent(st) -> inj @@ jss st
                                           | Component(comp) -> inj comp)
                                          children in
     let opts = Array.append [| inj @@ jss tag; to_obj opts |] children_ar in
@@ -62,9 +73,9 @@ module React:REACT = struct
       let value' = Comp.from_js value in
       Comp.render value'
     in
-    let comp = create_class render_callback in
+    let comp_class = create_class render_callback in
     let r value =
-      element_of_component comp [("value", inj @@ Comp.to_js value)]
+      make_component comp_class [("value", inj @@ Comp.to_js value)]
     in r
 
   let render comp node =
@@ -80,29 +91,29 @@ end
 
 module CommentList = struct
   include StringComponent
-  let render st = React.element_of_tag "div"
-                                       [("className", inj @@ jss "commentList")]
-                                       [React.String(st)]
+  let render st = React.tag "div"
+                            [("className", inj @@ jss "commentList")]
+                            [React.text st]
 end
 let comment_list = React.defcomponent (module CommentList)
 
 module CommentForm = struct
   include StringComponent
-  let render st = React.element_of_tag "div"
-                                       [("className", inj @@ jss "commentForm")]
-                                       [React.String(st)]
+  let render st = React.tag "div"
+                            [("className", inj @@ jss "commentForm")]
+                            [React.text st]
 end
 let comment_form = React.defcomponent (module CommentForm)
 
 module CommentBox = struct
   include StringComponent
   let render st =
-    let header = React.element_of_tag "h1" [] [React.String("Comment: ")] in
-    React.element_of_tag "div"
-                         [("className", inj @@ jss "commentBox")]
-                         [React.Component(header);
-                          React.Component((comment_list "This is comment list"));
-                          React.Component((comment_form "This is comment form"))]
+    let header = React.tag "h1" [] [React.text "Comment: "] in
+    React.tag "div"
+              [("className", inj @@ jss "commentBox")]
+              [React.component header;
+               React.component @@ comment_list "This is comment list";
+               React.component @@ comment_form "This is comment form"]
 end
 
 let comment_box = React.defcomponent (module CommentBox)
