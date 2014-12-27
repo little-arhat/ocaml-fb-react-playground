@@ -14,10 +14,12 @@ Executable example
   CompiledObject: byte
   BuildTools:     camlp4o
   BuildDepends:   js_of_ocaml, js_of_ocaml.syntax
-  ByteOpt:        -syntax camlp4o -package js_of_ocaml -package js_of_ocaml.syntax
+  ByteOpt:        -g -syntax camlp4o -package js_of_ocaml -package js_of_ocaml.syntax
 
 PostBuildCommand:
-  js_of_ocaml --pretty --noinline core.byte -o resources/js/core.js
+  js_of_ocaml --pretty --noinline --sourcemap core.byte -o core.js
+  mv core.js resources/js/core.js
+  mv core.map resources/js/core.map
   rm -f core.byte
 
 PostCleanCommand:
