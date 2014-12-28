@@ -14,14 +14,17 @@ module type OPTIONS = sig
     val (<|) : t -> el -> t
     val to_js : t -> 'a
 
-    val el_of_int : string -> int -> el
-    val el_of_float : string -> float -> el
-    val el_of_string : string -> string -> el
-    val el_of_bool : string -> bool -> el
-    val el_of_list : string -> el list -> el
-    val el_of_array : string -> el array -> el
-    val el_of_options : string -> t -> el
-
+    val int : string -> int -> el
+    val int32 : string -> int32 -> el
+    val int64 : string -> int64 -> el
+    val nativeint : string -> nativeint -> el
+    val float : string -> float -> el
+    val str : string -> string -> el
+    val bool : string -> bool -> el
+    val char : string -> char -> el
+    val list : string -> el list -> el
+    val array : string -> el array -> el
+    val opts : string -> t -> el
   end
 
 module Options:OPTIONS = struct
@@ -32,14 +35,17 @@ module Options:OPTIONS = struct
   let (<|) o p = p :: o
   let to_js o = Js.Unsafe.obj @@ Array.of_list o
 
-  let el_of_int k v = (k, inj @@ Js.number_of_float @@ float_of_int v)
-  let el_of_float k v = (k, inj @@ Js.number_of_float v)
-  let el_of_string k v = (k, inj @@ Js.string v)
-  let el_of_bool k v = (k, inj @@ Js.bool v)
-  let el_of_list k v = (k, inj @@ Js.array @@ Array.of_list v)
-  let el_of_array k v = (k, inj @@ Js.array v)
-  let el_of_array k v = (k, inj @@ Js.array v)
-  let el_of_options k v = (k, inj @@ to_obj v)
+  let int k v = (k, inj @@ Js.number_of_float @@ float_of_int v)
+  let int32 k v = (k, inj @@ Js.number_of_float @@ Int32.to_float v)
+  let int64 k v = (k, inj @@ Js.number_of_float @@ Int64.to_float v)
+  let nativeint k v = (k, inj @@ Js.number_of_float @@ Nativeint.to_float v)
+  let float k v = (k, inj @@ Js.number_of_float v)
+  let str k v = (k, inj @@ Js.string v)
+  let bool k v = (k, inj @@ Js.bool v)
+  let char k v = (k, inj @@ Js.string @@ Char.escaped v)
+  let list k v = (k, inj @@ Js.array @@ Array.of_list v)
+  let array k v = (k, inj @@ Js.array v)
+  let opts k v = (k, inj @@ to_obj v)
 end
 module O = Options
 
