@@ -124,6 +124,7 @@ module React:REACT = struct
     Js.Unsafe.meth_call react "render" [| inj comp; inj node |]
 end
 
+
 module StringComponent = struct
   type arg = string
   type jsval = Js.js_string Js.t
@@ -134,27 +135,40 @@ end
 module CommentList = struct
   include StringComponent
   let render st =
-    React.tag "div" O.(empty <| el_of_string "className" "commentList")
-              [React.text st]
+    [%html
+        [%div [%opts className="commentList"]
+              [
+                React.text st
+              ]
+        ]
+    ]
 end
 let comment_list = React.defcomponent (module CommentList)
 
 module CommentForm = struct
   include StringComponent
   let render st =
-    React.tag "div" O.(empty <| el_of_string "className" "commentForm")
-              [React.text st]
+    [%html
+        [%div [%opts className="commentForm"]
+              [
+                React.text st
+              ]
+        ]
+    ]
 end
 let comment_form = React.defcomponent (module CommentForm)
 
 module CommentBox = struct
   include StringComponent
   let render st =
-    let header = React.tag "h1" O.empty [React.text "Comment: "] in
-    React.tag "div" O.(empty <| el_of_string "className" "commentBox")
-              [React.component header;
+    [%html
+        [%div [%opts className="commentBox"]
+              [[%h1 [%opts] ["Comment:"]];
                React.component @@ comment_list "This is comment list";
-               React.component @@ comment_form "This is comment form"]
+               React.component @@ comment_form "This is comment form"
+              ]
+        ]
+    ]
 end
 
 let comment_box = React.defcomponent (module CommentBox)
@@ -164,5 +178,21 @@ let start _:(bool Js.t) =
   let () = React.render (comment_box "This is a comment box") div in
   Js._false
 
+
+(* let () = *)
+(*   Html.window##onload <- Dom.handler start *)
+
+(* XXX: Use hand-written expansion of above expr in the absence of camlp4 *)
 let () =
-  Html.window##onload <- Dom.handler start
+  let _ =
+    let module M =
+      struct
+        let res =
+          let _ = (Html.window : 'B Js.t) in
+          let _ =
+            fun (x : 'B) -> (x#onload : < set : 'A -> unit; .. > Js.gen_prop)
+          in (Dom.handler start : 'A)
+
+      end
+    in M.res
+  in Js.Unsafe.set Html.window "onload" (Dom.handler start)

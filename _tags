@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 719254c77e8c9114157239c7801cc2fa)
+# DO NOT EDIT (digest: d58e588b87547ac9fcb27ee96463b4b0)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -14,11 +14,12 @@ true: annot, bin_annot
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
+# Executable ppx_react_html
+"src/syntax/ppx_react_html.byte": package(compiler-libs.common)
+<src/syntax/*.ml{,i,y}>: package(compiler-libs.common)
 # Executable example
 "src/core.byte": oasis_executable_example_byte
 <src/*.ml{,i,y}>: oasis_executable_example_byte
-"src/core.byte": pkg_js_of_ocaml
-"src/core.byte": pkg_js_of_ocaml.syntax
-<src/*.ml{,i,y}>: pkg_js_of_ocaml
-<src/*.ml{,i,y}>: pkg_js_of_ocaml.syntax
+"src/core.byte": package(js_of_ocaml)
+<src/*.ml{,i,y}>: package(js_of_ocaml)
 # OASIS_STOP

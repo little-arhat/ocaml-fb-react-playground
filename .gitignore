@@ -17,3 +17,4 @@ log
 resources/js/core.js
 setup.data
 setup.log
+ppx_react_html.byte

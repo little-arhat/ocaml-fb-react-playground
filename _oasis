@@ -6,15 +6,28 @@ Authors:     Roma Sokolov
 License:     MIT
 Plugins:     DevFiles (0.2)
 BuildTools:  ocamlbuild
+OCamlVersion: >= 4.02
+
+PreInstallCommand:   $ocamlfind install ppx_react_html src/syntax/META
+PreUninstallCommand: $ocamlfind remove ppx_react_html
+
+Executable ppx_react_html
+  Path:           src/syntax
+  BuildDepends:   compiler-libs.common
+  MainIs:         ppx_react_html.ml
+  CompiledObject: byte
+
 
 Executable example
   Path:           src
   MainIs:         core.ml
   Install:        false
   CompiledObject: byte
-  BuildTools:     camlp4o
-  BuildDepends:   js_of_ocaml, js_of_ocaml.syntax
-  ByteOpt:        -g -syntax camlp4o -package js_of_ocaml -package js_of_ocaml.syntax
+  BuildTools:     ocamlbuild
+  BuildDepends:   js_of_ocaml
+  ByteOpt+:        -g
+  ByteOpt+:        -ppx src/syntax/ppx_react_html.byte
+
 
 PostBuildCommand:
   js_of_ocaml --pretty --noinline --sourcemap core.byte -o core.js

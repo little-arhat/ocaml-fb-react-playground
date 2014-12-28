@@ -1,0 +1,2 @@
+version = "0.0.1"
+ppx = "ppx_react_html"
