@@ -54,6 +54,8 @@ let conv_func_from_value_type value_expr =
   | (Pexp_construct({txt = Lident("false"); loc}, None), _) -> "bool"
   | (Pexp_construct({txt = Lident("::"); loc}, _), _) -> "list"
   | (Pexp_array(_), _) -> "array"
+  | (Pexp_fun(_, _, _, _), _) -> "func"
+  | (Pexp_function(_), _) -> "func"
   | (Pexp_extension({txt = "opts"; _}, _), _) -> "opts"
   | (Pexp_ident({txt; loc}), attrs) ->
      (match attrs with
@@ -73,24 +75,36 @@ let rec opts_expr mapper expr = match expr.pexp_desc with
      (match items with
       | [] -> ident ~loc ~left:"Options" "empty"
       | [{ pstr_desc=Pstr_eval(options, _)}] ->
-         open_fresh "Options" @@ apply (ident ~loc "<|") [ident ~loc "empty";
-                                                          option_expr mapper options]
+         let rev_exprs = option_expr mapper options in
+         let application = List.fold_left
+                             (fun apl exp ->
+                              apply (ident ~loc "<|") [apl; exp])
+                             (ident ~loc "empty")
+                             rev_exprs in
+         open_fresh "Options" @@ application
       | _ -> Location.raise_errorf ~loc "[%%opts] should be empty or contain sequence k/v pairs: k1=v1; k2=v2"
      )
   | _ -> default_mapper.expr mapper expr
-and option_expr mapper expr = match expr.pexp_desc with
-  | Pexp_apply({pexp_desc = Pexp_ident {txt = Lident "="}},
-               [("", {pexp_desc = Pexp_ident({txt = Lident key})});
-                ("", value_expr)
-               ]
-              ) ->
-     let conv_func = conv_func_from_value_type value_expr in
-     apply (ident conv_func) [const_string key;
-                              opts_expr mapper @@ strip_attrs value_expr]
-  | Pexp_sequence(exp1, exp2) ->
-     apply (ident "<|") [option_expr mapper exp1;
-                         option_expr mapper exp2]
-  | _ -> Location.raise_errorf "[%%opts] should be empty or contain sequence k/v pairs: k1=v1; k2=v2"
+and option_expr mapper expr =
+  let item_expr mapper expr = match expr.pexp_desc with
+    | Pexp_apply({pexp_desc = Pexp_ident {txt = Lident "="}},
+                 [("", {pexp_desc = Pexp_ident({txt = Lident key})});
+                  ("", value_expr)
+                 ]
+                ) ->
+       let conv_func = conv_func_from_value_type value_expr in
+       apply (ident conv_func)
+                       [const_string key;
+                        opts_expr mapper @@ strip_attrs value_expr]
+    | _ -> Location.raise_errorf "[%%opts items should be key-value pairs: k=v;]"
+  in
+  let rec wrk mapper expr acc = match expr.pexp_desc with
+    | Pexp_apply(_, _) ->
+       (item_expr mapper expr)::acc
+    | Pexp_sequence(exp1, exp2) ->
+       (item_expr mapper exp1)::(wrk mapper exp2 acc)
+    | _ -> Location.raise_errorf "[%%opts] should be empty or contain sequence k/v pairs: k1=v1; k2=v2"
+  in wrk mapper expr []
 
 let tags = [
   "a"; "abbr"; "address"; "area"; "article"; "aside"; "audio"; "b"; "base";

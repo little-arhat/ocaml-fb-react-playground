@@ -25,6 +25,8 @@ module type OPTIONS = sig
     val list : string -> el list -> el
     val array : string -> el array -> el
     val opts : string -> t -> el
+    val func : string -> (('b #Dom.event as 'a) Js.t -> bool Js.t) -> el
+
   end
 
 module Options:OPTIONS = struct
@@ -46,8 +48,8 @@ module Options:OPTIONS = struct
   let list k v = (k, inj @@ Js.array @@ Array.of_list v)
   let array k v = (k, inj @@ Js.array v)
   let opts k v = (k, inj @@ to_obj v)
+  let func k v = (k, inj @@ Dom.handler v)
 end
-module O = Options
 
 module ReactTypes = struct
   (* Want to hide impl details *)
@@ -196,4 +198,5 @@ let () =
 
       end
     in M.res
-  in Js.Unsafe.set Html.window "onload" (Dom.handler start)
+  in
+  Js.Unsafe.set Html.window "onload" (Dom.handler start)
