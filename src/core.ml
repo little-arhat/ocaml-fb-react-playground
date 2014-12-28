@@ -134,11 +134,11 @@ end
 
 module CommentList = struct
   include StringComponent
-  let render st =
+  let render prop =
     [%html
         [%div [%opts className="commentList"]
               [
-                React.text st
+                React.text prop
               ]
         ]
     ]
@@ -147,11 +147,11 @@ let comment_list = React.defcomponent (module CommentList)
 
 module CommentForm = struct
   include StringComponent
-  let render st =
+  let render prop =
     [%html
         [%div [%opts className="commentForm"]
               [
-                React.text st
+                React.text prop
               ]
         ]
     ]
@@ -160,10 +160,11 @@ let comment_form = React.defcomponent (module CommentForm)
 
 module CommentBox = struct
   include StringComponent
-  let render st =
+  let render prop =
     [%html
         [%div [%opts className="commentBox"]
               [[%h1 [%opts] ["Comment:"]];
+               [%b [%opts] [React.text prop]];
                React.component @@ comment_list "This is comment list";
                React.component @@ comment_form "This is comment form"
               ]
