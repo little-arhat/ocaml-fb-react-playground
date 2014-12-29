@@ -6,6 +6,14 @@ let to_obj l = Js.Unsafe.obj @@ Array.of_list l
 let jss s = Js.string s
 let inj o = Js.Unsafe.inject o
 
+(* Future plans: *)
+(*  - Use experimental ppx ext for js_of_ocaml for typed access *)
+(*  - Implement react tutorial *)
+(*  - Implement snake game *)
+(*  - Define ppx-deriving plugin for marshalling records to js objects *)
+(*  - Remove Options and use objects instead *)
+(*  - Generate object from [%opts ] extension with props and method _to_js *)
+
 module type OPTIONS = sig
     type t
     type el
