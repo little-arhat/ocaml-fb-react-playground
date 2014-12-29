@@ -107,8 +107,10 @@ module React:REACT = struct
                                           | TextContent(st) -> inj @@ jss st
                                           | Component(comp) -> inj comp)
                                          children in
-    let opts = Array.append [| inj @@ jss tag; Options.to_js opts |] children_ar in
-    Js.Unsafe.meth_call react "createElement" opts
+    let js_opts = Options.to_js opts in
+    let () = Js.Unsafe.meth_call Firebug.console "log" [| inj @@ Js.string "LOL:"; js_opts |] in
+    let args = Array.append [| inj @@ jss tag; js_opts |] children_ar in
+    Js.Unsafe.meth_call react "createElement" args
 
   let defcomponent (type a) (module Comp:COMPONENT with type arg = a) =
     let render_callback this _ =
@@ -160,12 +162,16 @@ module CommentForm = struct
 end
 let comment_form = React.defcomponent (module CommentForm)
 
+let log s =
+  Js.Unsafe.meth_call Firebug.console "log" [| Js.Unsafe.inject (Js.string s) |]
+
 module CommentBox = struct
   include StringComponent
   let render prop =
     [%html
         [%div [%opts className="commentBox"]
-              [[%h1 [%opts] ["Comment:"]];
+              [[%h1 [%opts id="mmmm"; onClick=(fun _ -> log "lol")]
+                    ["Comment:"]];
                [%b [%opts] [React.text prop]];
                React.component @@ comment_list "This is comment list";
                React.component @@ comment_form "This is comment form"
@@ -176,7 +182,8 @@ end
 
 let comment_box = React.defcomponent (module CommentBox)
 
-let start _:(bool Js.t) =
+
+let start t =
   let div = Dom_html.getElementById "main-area" in
   let () = React.render (comment_box "This is a comment box") div in
   Js._false
