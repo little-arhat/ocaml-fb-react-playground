@@ -17,5 +17,5 @@ log
 resources/js/core.js
 setup.data
 setup.log
-ppx_react_html.byte
+ppx_react_opts.byte
 ppx_react_generate_tags.byte

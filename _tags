@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: b9bb1680130f02fd6881654f6692d2ad)
+# DO NOT EDIT (digest: 330fffe2186a7a09d797580184adb42c)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -14,8 +14,8 @@ true: annot, bin_annot
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
-# Executable ppx_react_html
-"src/syntax/ppx_react_html.byte": package(compiler-libs.common)
+# Executable ppx_react_opts
+"src/syntax/ppx_react_opts.byte": package(compiler-libs.common)
 # Executable ppx_react_generate_tags
 "src/syntax/ppx_react_generate_tags.byte": package(compiler-libs.common)
 <src/syntax/*.ml{,i,y}>: package(compiler-libs.common)

@@ -8,13 +8,13 @@ Plugins:     DevFiles (0.2)
 BuildTools:  ocamlbuild
 OCamlVersion: >= 4.02
 
-PreInstallCommand:   $ocamlfind install ppx_react_html src/syntax/META
-PreUninstallCommand: $ocamlfind remove ppx_react_html
+PreInstallCommand:   $ocamlfind install ppx_react_opts src/syntax/META
+PreUninstallCommand: $ocamlfind remove ppx_react_opts
 
-Executable ppx_react_html
+Executable ppx_react_opts
   Path:           src/syntax
   BuildDepends:   compiler-libs.common
-  MainIs:         ppx_react_html.ml
+  MainIs:         ppx_react_opts.ml
   CompiledObject: byte
 
 Executable ppx_react_generate_tags
