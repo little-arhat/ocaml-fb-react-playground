@@ -203,11 +203,6 @@ let comment_box = React.defcomponent (module CommentBox)
 let start t =
   let div = Dom_html.getElementById "main-area" in
   let () = React.render (comment_box "This is a comment box") div in
-  let pts = Options.to_js (Options.(empty <|
-                                      clb "ttt" (fun _ -> let _ = log "2" in Js._true) <|
-                                      func "zzz" (fun _ -> log "t")
-                                   )) in
-  let () = Js.Unsafe.set Html.window "lolo" pts in
   Js._false
 
 
