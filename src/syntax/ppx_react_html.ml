@@ -20,11 +20,6 @@ let ident ?(loc = !default_loc) ?left name =
 
 let apply id exprs = Exp.apply id (args exprs)
 
-let constructor ?(loc = !default_loc) name a =
-  Exp.construct { txt = Lident name; loc} a
-
-let tuple (a,b) = Exp.tuple [a; b]
-
 let open_fresh ?(loc = !default_loc) name =
   Exp.open_ Fresh { txt = Lident name; loc }
 
@@ -54,8 +49,8 @@ let conv_func_from_value_type value_expr =
   | (Pexp_construct({txt = Lident("false"); loc}, None), _) -> "bool"
   | (Pexp_construct({txt = Lident("::"); loc}, _), _) -> "list"
   | (Pexp_array(_), _) -> "array"
-  | (Pexp_fun(_, _, _, _), _) -> "func"
-  | (Pexp_function(_), _) -> "func"
+  | (Pexp_fun(_, _, _, _), _) -> "clb"
+  | (Pexp_function(_), _) -> "clb"
   | (Pexp_extension({txt = "opts"; _}, _), _) -> "opts"
   | (Pexp_ident({txt; loc}), attrs) ->
      (match attrs with
@@ -106,71 +101,7 @@ and option_expr mapper expr =
     | _ -> Location.raise_errorf "[%%opts] should be empty or contain sequence k/v pairs: k1=v1; k2=v2"
   in wrk mapper expr []
 
-let tags = [
-  "a"; "abbr"; "address"; "area"; "article"; "aside"; "audio"; "b"; "base";
-  "bdi"; "bdo"; "big"; "blockquote"; "body"; "br"; "button"; "canvas";
-  "caption"; "cite"; "code"; "col"; "colgroup"; "data"; "datalist"; "dd";
-  "del"; "details"; "dfn"; "div"; "dl"; "dt"; "em"; "embed"; "fieldset";
-  "figcaption"; "figure"; "footer"; "form"; "h1"; "h2"; "h3"; "h4"; "h5"; "h6";
-  "head"; "header"; "hr"; "i"; "iframe"; "img"; "input"; "ins"; "kbd";
-  "keygen"; "label"; "legend"; "li"; "link"; "main"; "map"; "mark"; "menu";
-  "menuitem"; "meta"; "meter"; "nav"; "noscript"; "object"; "ol"; "optgroup";
-  "option"; "output"; "p"; "param"; "pre"; "progress"; "q"; "rp"; "rt"; "ruby";
-  "s"; "samp"; "script"; "section"; "select"; "small"; "source"; "span";
-  "strong"; "style"; "sub"; "summary"; "sup"; "table"; "tbody"; "td";
-  "textarea"; "tfoot"; "th"; "thead"; "time"; "title"; "tr"; "track";
-  "u"; "ul"; "var"; "video"; "wbr"; "circle"; "g"; "line"; "path"; "polygon";
-  "polyline"; "rect"; "svg"; "text"; "end"
-]
+let opts_mapper argv =
+  {default_mapper with expr = opts_expr }
 
-let rec
-    tag_expr mapper ext pstr = match (ext, pstr) with
-  | ({ txt = tag; loc }, pstr) when List.mem tag tags ->
-     (match pstr with
-      | PStr [{ pstr_desc =
-                  Pstr_eval(exp1, _)}] ->
-         (match exp1.pexp_desc with
-          | Pexp_apply (opts, [("", children)]) ->
-             apply (ident ~loc ~left:"React" "tag")
-                   [const_string tag;
-                    opts_expr mapper opts;
-                    children_expr mapper children]
-          | _ -> Location.raise_errorf ~loc "[%%tag] accepts options and list of children"
-         )
-      | _ -> Location.raise_errorf "[%%tag] accepts options and list of children"
-     )
-  | ({ txt; _ }, _) ->
-     Location.raise_errorf "Unsupported [%%tag] tagname: %s" txt
-  and
-    child_expr mapper expr = match expr.pexp_desc with
-    | Pexp_extension(ext, pstr) ->
-       apply (ident ~left:"React" "component") [tag_expr mapper ext pstr]
-    | Pexp_constant(Const_string(sym, _)) ->
-       apply (ident ~left:"React" "text") [(const_string sym)]
-    | _ -> default_mapper.expr mapper expr
-  and
-    children_expr mapper expr =
-    match expr.pexp_desc with
-    | Pexp_construct({txt = Lident("[]"); loc}, None) ->
-       constructor ~loc "[]" None
-    | Pexp_construct({txt = Lident("::"); loc},
-                     Some ({pexp_desc = Pexp_tuple [head; tail]})) ->
-       constructor ~loc "::" (Some(tuple(child_expr mapper head,
-                                         children_expr mapper tail)))
-    | _ -> Location.raise_errorf "[%%tag] children should be list of children"
-
-let html_expr mapper expr = match expr with
-  | { pexp_desc = Pexp_extension ({txt = "html"; loc=loc_html }, pstr_html )} ->
-     (match pstr_html with
-      | PStr [{ pstr_desc =
-                  Pstr_eval({ pexp_desc = Pexp_extension(ext, pstr) }, _)}] ->
-         tag_expr mapper ext pstr
-      | _ -> Location.raise_errorf ~loc:loc_html "[%%html] accepts single [%%tag] element "
-     )
-  | x -> opts_expr mapper expr
-
-
-let html_mapper argv =
-  {default_mapper with expr = html_expr }
-
-let () = register "html" html_mapper
+let () = register "opts" opts_mapper

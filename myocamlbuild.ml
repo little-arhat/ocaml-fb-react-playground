@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 2911513bc8e663925b076264b436b9dd) *)
+(* DO NOT EDIT (digest: 33811d386dec7ccebe1b9b46c1901426) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -614,17 +614,38 @@ let package_default =
           (["oasis_executable_example_byte"; "ocaml"; "link"; "byte"],
             [
                (OASISExpr.EBool true,
-                 S [A "-g"; A "-ppx"; A "src/syntax/ppx_react_html.byte"])
+                 S
+                   [
+                      A "-g";
+                      A "-ppx";
+                      A "src/syntax/ppx_react_html.byte";
+                      A "-ppx";
+                      A "src/syntax/ppx_react_generate_tags.byte"
+                   ])
             ]);
           (["oasis_executable_example_byte"; "ocaml"; "ocamldep"; "byte"],
             [
                (OASISExpr.EBool true,
-                 S [A "-g"; A "-ppx"; A "src/syntax/ppx_react_html.byte"])
+                 S
+                   [
+                      A "-g";
+                      A "-ppx";
+                      A "src/syntax/ppx_react_html.byte";
+                      A "-ppx";
+                      A "src/syntax/ppx_react_generate_tags.byte"
+                   ])
             ]);
           (["oasis_executable_example_byte"; "ocaml"; "compile"; "byte"],
             [
                (OASISExpr.EBool true,
-                 S [A "-g"; A "-ppx"; A "src/syntax/ppx_react_html.byte"])
+                 S
+                   [
+                      A "-g";
+                      A "-ppx";
+                      A "src/syntax/ppx_react_html.byte";
+                      A "-ppx";
+                      A "src/syntax/ppx_react_generate_tags.byte"
+                   ])
             ])
        ];
      includes = []
@@ -635,6 +656,6 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
-# 639 "myocamlbuild.ml"
+# 660 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;

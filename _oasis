@@ -17,6 +17,12 @@ Executable ppx_react_html
   MainIs:         ppx_react_html.ml
   CompiledObject: byte
 
+Executable ppx_react_generate_tags
+  Path:           src/syntax
+  Install:        false
+  BuildDepends:   compiler-libs.common
+  MainIs:         ppx_react_generate_tags.ml
+  CompiledObject: byte
 
 Executable example
   Path:           src
@@ -25,8 +31,8 @@ Executable example
   CompiledObject: byte
   BuildTools:     ocamlbuild
   BuildDepends:   js_of_ocaml
-  ByteOpt+:        -g
-  ByteOpt+:        -ppx src/syntax/ppx_react_html.byte
+  ByteOpt+:       -g
+  ByteOpt+:       -ppx src/syntax/ppx_react_html.byte -ppx src/syntax/ppx_react_generate_tags.byte
 
 
 PostBuildCommand:

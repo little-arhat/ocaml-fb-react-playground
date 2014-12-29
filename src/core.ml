@@ -25,7 +25,8 @@ module type OPTIONS = sig
     val list : string -> el list -> el
     val array : string -> el array -> el
     val opts : string -> t -> el
-    val func : string -> (('b #Dom.event as 'a) Js.t -> bool Js.t) -> el
+    val clb : string -> (('b #Dom.event as 'a) Js.t -> bool Js.t) -> el
+    val func : string -> ('a Js.t -> 'b Js.t) -> el
 
   end
 
@@ -48,7 +49,8 @@ module Options:OPTIONS = struct
   let list k v = (k, inj @@ Js.array @@ Array.of_list v)
   let array k v = (k, inj @@ Js.array v)
   let opts k v = (k, inj @@ to_obj v)
-  let func k v = (k, inj @@ Dom.handler v)
+  let clb k v = (k, inj @@ Dom.handler v)
+  let func k v = (k, inj v)
 end
 
 module ReactTypes = struct
@@ -74,9 +76,10 @@ module type REACT = sig
     val tag : string -> (* tag *)
               Options.t ->
               child list ->
-              component
+              child
     val text : string -> child
     val component : component -> child
+    val dom : child -> component
     val render : component -> Dom_html.element Js.t -> unit
 
     val defcomponent : (module COMPONENT with type arg = 'a) -> ('a -> component)
@@ -108,9 +111,12 @@ module React:REACT = struct
                                           | Component(comp) -> inj comp)
                                          children in
     let js_opts = Options.to_js opts in
-    let () = Js.Unsafe.meth_call Firebug.console "log" [| inj @@ Js.string "LOL:"; js_opts |] in
     let args = Array.append [| inj @@ jss tag; js_opts |] children_ar in
-    Js.Unsafe.meth_call react "createElement" args
+    Component(Js.Unsafe.meth_call react "createElement" args)
+
+  let rec dom ch = match ch with
+    | TextContent(st) -> dom @@ tag "span" [%opts] [ch]
+    | Component(c) -> c
 
   let defcomponent (type a) (module Comp:COMPONENT with type arg = a) =
     let render_callback this _ =
@@ -128,6 +134,23 @@ module React:REACT = struct
     Js.Unsafe.meth_call react "render" [| inj comp; inj node |]
 end
 
+module React_DOM = struct
+  [%generate_tags
+   a; abbr; address; area; article; aside; audio; b; base;
+   bdi; bdo; big; blockquote; body; br; button; canvas;
+   caption; cite; code; col; colgroup; data; datalist; dd;
+   del; details; dfn; div; dl; dt; em; embed; fieldset;
+   figcaption; figure; footer; form; h1; h2; h3; h4; h5; h6;
+   head; header; hr; i; iframe; img; input; ins; kbd;
+   keygen; label; legend; li; link; main; map; mark; menu;
+   menuitem; meta; meter; nav; noscript; object_; ol; optgroup;
+   option; output; p; param; pre; progress; q; rp; rt; ruby;
+   s; samp; script; section; select; small; source; span;
+   strong; style; sub; summary; sup; table; tbody; td;
+   textarea; tfoot; th; thead; time; title; tr; track;
+   u; ul; var; video; wbr; circle; g; line; path; polygon;
+   polyline; rect; svg; text; end_]
+  end
 
 module StringComponent = struct
   type arg = string
@@ -139,26 +162,22 @@ end
 module CommentList = struct
   include StringComponent
   let render prop =
-    [%html
-        [%div [%opts className="commentList"]
-              [
-                React.text prop
-              ]
-        ]
-    ]
+    React_DOM.(React.dom @@
+      (div [%opts className="commentList"]
+           [
+             React.text prop
+           ]))
 end
 let comment_list = React.defcomponent (module CommentList)
 
 module CommentForm = struct
   include StringComponent
   let render prop =
-    [%html
-        [%div [%opts className="commentForm"]
-              [
-                React.text prop
-              ]
-        ]
-    ]
+    React_DOM.(React.dom @@
+      (div [%opts className="commentForm"]
+           [
+             React.text prop
+           ]))
 end
 let comment_form = React.defcomponent (module CommentForm)
 
@@ -168,24 +187,27 @@ let log s =
 module CommentBox = struct
   include StringComponent
   let render prop =
-    [%html
-        [%div [%opts className="commentBox"]
-              [[%h1 [%opts id="mmmm"; onClick=(fun _ -> log "lol")]
-                    ["Comment:"]];
-               [%b [%opts] [React.text prop]];
-               React.component @@ comment_list "This is comment list";
-               React.component @@ comment_form "This is comment form"
-              ]
-        ]
-    ]
+    React_DOM.(React.dom @@
+      (div [%opts className="commentBox"]
+           [
+             (h1 [%opts id="mmmm";
+                        onClick=(fun _ -> let () = log "lol" in Js._false)]
+                 [React.text "Comment:"]);
+             React.component @@ comment_list "This is comment list";
+             React.component @@ comment_form "This is comment form"
+           ]))
 end
-
 let comment_box = React.defcomponent (module CommentBox)
 
 
 let start t =
   let div = Dom_html.getElementById "main-area" in
   let () = React.render (comment_box "This is a comment box") div in
+  let pts = Options.to_js (Options.(empty <|
+                                      clb "ttt" (fun _ -> let _ = log "2" in Js._true) <|
+                                      func "zzz" (fun _ -> log "t")
+                                   )) in
+  let () = Js.Unsafe.set Html.window "lolo" pts in
   Js._false
 
 
