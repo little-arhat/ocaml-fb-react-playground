@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 33811d386dec7ccebe1b9b46c1901426) *)
+(* DO NOT EDIT (digest: a871dd4568fbe4d2e5edcd208fc19c3e) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -618,7 +618,7 @@ let package_default =
                    [
                       A "-g";
                       A "-ppx";
-                      A "src/syntax/ppx_react_html.byte";
+                      A "src/syntax/ppx_react_opts.byte";
                       A "-ppx";
                       A "src/syntax/ppx_react_generate_tags.byte"
                    ])
@@ -630,7 +630,7 @@ let package_default =
                    [
                       A "-g";
                       A "-ppx";
-                      A "src/syntax/ppx_react_html.byte";
+                      A "src/syntax/ppx_react_opts.byte";
                       A "-ppx";
                       A "src/syntax/ppx_react_generate_tags.byte"
                    ])
@@ -642,7 +642,7 @@ let package_default =
                    [
                       A "-g";
                       A "-ppx";
-                      A "src/syntax/ppx_react_html.byte";
+                      A "src/syntax/ppx_react_opts.byte";
                       A "-ppx";
                       A "src/syntax/ppx_react_generate_tags.byte"
                    ])

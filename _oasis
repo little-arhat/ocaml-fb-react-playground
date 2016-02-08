@@ -32,7 +32,7 @@ Executable example
   BuildTools:     ocamlbuild
   BuildDepends:   js_of_ocaml
   ByteOpt+:       -g
-  ByteOpt+:       -ppx src/syntax/ppx_react_html.byte -ppx src/syntax/ppx_react_generate_tags.byte
+  ByteOpt+:       -ppx src/syntax/ppx_react_opts.byte -ppx src/syntax/ppx_react_generate_tags.byte
 
 
 PostBuildCommand:
